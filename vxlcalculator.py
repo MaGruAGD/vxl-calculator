@@ -138,73 +138,52 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.subheader("96-Well Plate Layout")
     
-    # Column selection buttons
-    st.markdown('<div class="column-selector">', unsafe_allow_html=True)
-    st.markdown("**Select entire columns:**")
-    col_buttons = st.columns(12)
-    for i, col_btn in enumerate(col_buttons):
-        with col_btn:
-            column_filled = np.all(st.session_state.plate_state[:, i])
-            button_text = f"✓ {i+1}" if column_filled else f"{i+1}"
-            button_type = "secondary" if column_filled else "primary"
-            
-            if st.button(button_text, key=f"col_{i}", use_container_width=True, type=button_type):
-                # Toggle entire column
-                current_state = np.all(st.session_state.plate_state[:, i])
-                st.session_state.plate_state[:, i] = not current_state
-                st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+
     
     # Create interactive plate display
-    st.markdown("**Click wells to toggle:**")
+    st.markdown("**Select rows/columns or click individual wells:**")
     
-    # Column headers
-    header_cols = st.columns([0.5] + [1] * 12)
+    # Column headers with checkboxes
+    header_cols = st.columns([0.5, 0.5] + [1] * 12)
     with header_cols[0]:
-        st.markdown("")  # Empty space for row labels
+        st.markdown("")  # Empty space 
+    with header_cols[1]:
+        st.markdown("")  # Empty space for row checkboxes
     for i in range(12):
-        with header_cols[i + 1]:
+        with header_cols[i + 2]:
+            col_filled = np.all(st.session_state.plate_state[:, i])
+            if st.checkbox("", value=col_filled, key=f"col_check_{i}", help=f"Select entire column {i+1}"):
+                if not col_filled:  # If checkbox is now checked and column wasn't filled
+                    st.session_state.plate_state[:, i] = True
+                    st.rerun()
+            else:
+                if col_filled:  # If checkbox is now unchecked and column was filled
+                    st.session_state.plate_state[:, i] = False
+                    st.rerun()
             st.markdown(f"<div style='text-align: center; font-weight: bold; font-size: 12px; color: #666;'>{i+1}</div>", unsafe_allow_html=True)
     
     # Create the 96-well plate grid
     for row in range(8):
-        cols = st.columns([0.5] + [1] * 12)  # Row label + 12 wells
+        cols = st.columns([0.5, 0.5] + [1] * 12)  # Row checkbox + Row label + 12 wells
         
         with cols[0]:
+            row_filled = np.all(st.session_state.plate_state[row, :])
+            if st.checkbox("", value=row_filled, key=f"row_check_{row}", help=f"Select entire row {chr(65 + row)}"):
+                if not row_filled:  # If checkbox is now checked and row wasn't filled
+                    st.session_state.plate_state[row, :] = True
+                    st.rerun()
+            else:
+                if row_filled:  # If checkbox is now unchecked and row was filled
+                    st.session_state.plate_state[row, :] = False
+                    st.rerun()
+        
+        with cols[1]:
             st.markdown(f"<div style='text-align: center; font-weight: bold; font-size: 14px; color: #666; padding: 5px;'>{chr(65 + row)}</div>", unsafe_allow_html=True)
         
         for col in range(12):
-            with cols[col + 1]:
+            with cols[col + 2]:
                 well_id = get_well_id(row, col)
                 is_filled = st.session_state.plate_state[row, col]
-                
-                # Create circular button style
-                if is_filled:
-                    button_html = f"""
-                    <div style="
-                        width: 30px; 
-                        height: 30px; 
-                        border-radius: 50%; 
-                        background: linear-gradient(145deg, #28a745, #34ce57);
-                        border: 2px solid #20c997;
-                        margin: 2px auto;
-                        cursor: pointer;
-                        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
-                    " title="Well {well_id} - Filled"></div>
-                    """
-                else:
-                    button_html = f"""
-                    <div style="
-                        width: 30px; 
-                        height: 30px; 
-                        border-radius: 50%; 
-                        background: white;
-                        border: 2px solid #ced4da;
-                        margin: 2px auto;
-                        cursor: pointer;
-                        box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
-                    " title="Well {well_id} - Empty"></div>
-                    """
                 
                 if st.button(
                     "●" if is_filled else "○", 
