@@ -15,74 +15,11 @@ st.markdown("""
 <style>
 .plate-container {
     background: white;
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     margin: 20px 0;
-    border: 2px solid #e9ecef;
-}
-
-.plate-grid {
-    display: grid;
-    grid-template-columns: 40px repeat(12, 45px);
-    grid-template-rows: 40px repeat(8, 45px);
-    gap: 3px;
-    justify-content: center;
-    margin: 20px auto;
-    max-width: 700px;
-}
-
-.row-header, .col-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
-    color: #495057;
-    background: #f8f9fa;
-    border-radius: 6px;
-}
-
-.well-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.well-empty {
-    background: linear-gradient(145deg, #ffffff, #f1f3f4);
-    border-color: #ced4da;
-    color: #6c757d;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.well-empty:hover {
-    background: linear-gradient(145deg, #e9ecef, #dee2e6);
-    border-color: #adb5bd;
-    transform: scale(1.05);
-}
-
-.well-filled {
-    background: linear-gradient(145deg, #28a745, #34ce57);
-    border-color: #20c997;
-    color: white;
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-}
-
-.well-filled:hover {
-    background: linear-gradient(145deg, #34ce57, #28a745);
-    transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(40, 167, 69, 0.4);
+    border: 1px solid #e9ecef;
 }
 
 .metric-card {
@@ -219,80 +156,60 @@ with col1:
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Create interactive plate display
-    st.markdown('<div class="plate-container">', unsafe_allow_html=True)
-    
-    # Create the plate grid using HTML/CSS
-    plate_html = '<div class="plate-grid">'
-    
-    # Empty top-left corner
-    plate_html += '<div></div>'
-    
-    # Column headers
-    for col in range(12):
-        plate_html += f'<div class="col-header">{col + 1}</div>'
-    
-    # Rows
-    for row in range(8):
-        # Row header
-        plate_html += f'<div class="row-header">{chr(65 + row)}</div>'
-        
-        # Wells in this row
-        for col in range(12):
-            well_id = get_well_id(row, col)
-            is_filled = st.session_state.plate_state[row, col]
-            well_class = "well-filled" if is_filled else "well-empty"
-            symbol = "●" if is_filled else "○"
-            
-            plate_html += f'''
-            <div class="well-button {well_class}" 
-                 onclick="toggleWell({row}, {col})" 
-                 title="Well {well_id}">
-                {symbol}
-            </div>
-            '''
-    
-    plate_html += '</div>'
-    
-    # Add JavaScript for well interaction
-    plate_html += '''
-    <script>
-    function toggleWell(row, col) {
-        // This would need to communicate back to Streamlit
-        // For now, we'll use the button approach below
-    }
-    </script>
-    '''
-    
-    st.markdown(plate_html, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Fallback: Create clickable buttons in a more organized way
     st.markdown("**Click wells to toggle:**")
     
-    # Create a more organized grid of buttons
+    # Column headers
+    header_cols = st.columns([0.5] + [1] * 12)
+    with header_cols[0]:
+        st.markdown("")  # Empty space for row labels
+    for i in range(12):
+        with header_cols[i + 1]:
+            st.markdown(f"<div style='text-align: center; font-weight: bold; font-size: 12px; color: #666;'>{i+1}</div>", unsafe_allow_html=True)
+    
+    # Create the 96-well plate grid
     for row in range(8):
-        cols = st.columns([0.8] + [1] * 12)  # Row label + 12 wells
+        cols = st.columns([0.5] + [1] * 12)  # Row label + 12 wells
         
         with cols[0]:
-            st.markdown(f"<div style='text-align: center; font-weight: bold; padding: 8px;'>{chr(65 + row)}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold; font-size: 14px; color: #666; padding: 5px;'>{chr(65 + row)}</div>", unsafe_allow_html=True)
         
         for col in range(12):
             with cols[col + 1]:
                 well_id = get_well_id(row, col)
                 is_filled = st.session_state.plate_state[row, col]
                 
-                # Use emoji-based representation
+                # Create circular button style
                 if is_filled:
-                    button_label = "🟢"
-                    button_help = f"Well {well_id} - Click to empty"
+                    button_html = f"""
+                    <div style="
+                        width: 30px; 
+                        height: 30px; 
+                        border-radius: 50%; 
+                        background: linear-gradient(145deg, #28a745, #34ce57);
+                        border: 2px solid #20c997;
+                        margin: 2px auto;
+                        cursor: pointer;
+                        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+                    " title="Well {well_id} - Filled"></div>
+                    """
                 else:
-                    button_label = "⚪"
-                    button_help = f"Well {well_id} - Click to fill"
+                    button_html = f"""
+                    <div style="
+                        width: 30px; 
+                        height: 30px; 
+                        border-radius: 50%; 
+                        background: white;
+                        border: 2px solid #ced4da;
+                        margin: 2px auto;
+                        cursor: pointer;
+                        box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+                    " title="Well {well_id} - Empty"></div>
+                    """
                 
                 if st.button(
-                    button_label, 
+                    "●" if is_filled else "○", 
                     key=f"well_{row}_{col}",
-                    help=button_help,
+                    help=f"Well {well_id}",
                     use_container_width=True
                 ):
                     st.session_state.plate_state[row, col] = not st.session_state.plate_state[row, col]
