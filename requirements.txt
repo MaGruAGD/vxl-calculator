@@ -2,3 +2,4 @@ streamlit
 pandas
 streamlit
 streamlit-js-eval
+pip install streamlit pandas numpy
