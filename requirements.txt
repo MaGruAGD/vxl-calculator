@@ -1,5 +1,3 @@
-streamlit
-pandas
-streamlit
-streamlit-js-eval
-pip install streamlit pandas numpy
+pip install streamlit
+pip install pandas
+pip install numpy
