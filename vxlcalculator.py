@@ -70,60 +70,82 @@ footer {display: none;}
     font-weight: 600;
 }
 
-/* Compact plate styling with better visibility */
+/* Improved well button styling */
 .stButton > button {
-    height: 30px !important;
-    min-height: 30px !important;
+    height: 32px !important;
+    width: 32px !important;
+    min-height: 32px !important;
+    min-width: 32px !important;
     padding: 0 !important;
-    font-size: 14px !important;
+    font-size: 16px !important;
     line-height: 1 !important;
-    margin: 0 !important;
+    margin: 1px !important;
     font-weight: bold !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
+/* Selected well style - much more visible */
 .well-selected {
-    background-color: #007bff !important;
+    background: linear-gradient(145deg, #007bff, #0056b3) !important;
     color: white !important;
     font-weight: bold !important;
     border: 2px solid #0056b3 !important;
-    box-shadow: 0 0 8px rgba(0, 123, 255, 0.6) !important;
+    box-shadow: 0 0 12px rgba(0, 123, 255, 0.8) !important;
+    transform: scale(1.05) !important;
 }
 
+/* Unselected well style */
 .well-unselected {
-    background-color: #f8f9fa !important;
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef) !important;
     color: #6c757d !important;
     border: 1px solid #dee2e6 !important;
 }
 
 .well-unselected:hover {
-    background-color: #e9ecef !important;
+    background: linear-gradient(145deg, #e9ecef, #dee2e6) !important;
     border: 1px solid #adb5bd !important;
+    transform: scale(1.02) !important;
 }
 
-/* Center checkboxes properly */
+/* Improved checkbox styling and centering */
 .stCheckbox {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     margin: 0 !important;
     padding: 0 !important;
-    height: 30px !important;
+    height: 32px !important;
+    width: 32px !important;
 }
 
 .stCheckbox > label {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    width: 100% !important;
+    width: 32px !important;
+    height: 32px !important;
     margin: 0 !important;
     padding: 0 !important;
-    height: 30px !important;
+    cursor: pointer !important;
 }
 
 .stCheckbox > label > div {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.stCheckbox input[type="checkbox"] {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+    transform: scale(1.2) !important;
 }
 
 /* Remove excessive margins */
@@ -134,7 +156,7 @@ footer {display: none;}
 
 /* Compact columns */
 [data-testid="column"] {
-    padding: 0 0.2rem;
+    padding: 0 0.1rem;
 }
 
 /* Compact text elements */
@@ -187,7 +209,88 @@ h3 {
     font-weight: bold;
     margin-bottom: 0.3rem;
 }
+
+/* Plate grid container for better alignment */
+.plate-grid {
+    display: table;
+    margin: 0 auto;
+    border-spacing: 2px;
+}
+
+.plate-row {
+    display: table-row;
+}
+
+.plate-cell {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    padding: 1px;
+}
+
+.row-label, .col-label {
+    font-weight: bold;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    width: 32px;
+    margin: 1px;
+}
+
+.drag-instructions {
+    background: linear-gradient(145deg, #fff3cd, #ffeaa7);
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #856404;
+}
 </style>
+
+<script>
+// JavaScript for drag selection functionality
+let isDragging = false;
+let dragStartState = null;
+
+function enableDragSelection() {
+    document.addEventListener('mousedown', function(e) {
+        if (e.target.tagName === 'BUTTON' && e.target.textContent.match(/[●○]/)) {
+            isDragging = true;
+            dragStartState = e.target.textContent === '●' ? false : true;
+            e.preventDefault();
+        }
+    });
+
+    document.addEventListener('mouseover', function(e) {
+        if (isDragging && e.target.tagName === 'BUTTON' && e.target.textContent.match(/[●○]/)) {
+            const currentState = e.target.textContent === '●';
+            if (currentState !== dragStartState) {
+                e.target.click();
+            }
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+        dragStartState = null;
+    });
+
+    document.addEventListener('mouseleave', function() {
+        isDragging = false;
+        dragStartState = null;
+    });
+}
+
+// Initialize drag selection when page loads
+document.addEventListener('DOMContentLoaded', enableDragSelection);
+// Re-initialize after Streamlit reruns
+setTimeout(enableDragSelection, 100);
+</script>
 """, unsafe_allow_html=True)
 
 # Initialize session state
@@ -240,12 +343,20 @@ with main_col1:
     st.markdown('<div class="plate-section">', unsafe_allow_html=True)
     st.subheader("🔬 96-Well Plate Selection")
     
+    # Instructions for drag selection
+    st.markdown("""
+    <div class="drag-instructions">
+        💡 <strong>Tips:</strong> Click wells to select • Hold and drag to select multiple • Use checkboxes for entire rows/columns
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Create a more structured grid layout
     # Column headers with properly centered checkboxes
-    header_cols = st.columns([0.6, 0.6] + [0.7] * 12)
+    header_cols = st.columns([0.5, 0.5] + [0.6] * 12)
     with header_cols[0]:
-        st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 32px;'></div>", unsafe_allow_html=True)
     with header_cols[1]:
-        st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 32px;'></div>", unsafe_allow_html=True)
 
     for i in range(12):
         with header_cols[i + 2]:
@@ -260,18 +371,18 @@ with main_col1:
                     st.rerun()
 
     # Column numbers row
-    number_cols = st.columns([0.6, 0.6] + [0.7] * 12)
+    number_cols = st.columns([0.5, 0.5] + [0.6] * 12)
     with number_cols[0]:
         st.markdown("")
     with number_cols[1]:
         st.markdown("")
     for i in range(12):
         with number_cols[i + 2]:
-            st.markdown(f"<div style='text-align: center; font-weight: bold; font-size: 12px; color: #333; margin: 2px 0;'>{i+1}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='col-label'>{i+1}</div>", unsafe_allow_html=True)
 
-    # 96-well plate grid
+    # 96-well plate grid with improved styling
     for row in range(8):
-        cols = st.columns([0.6, 0.6] + [0.7] * 12)
+        cols = st.columns([0.5, 0.5] + [0.6] * 12)
         
         with cols[0]:
             row_filled = np.all(st.session_state.plate_state[row, :])
@@ -285,12 +396,26 @@ with main_col1:
                     st.rerun()
         
         with cols[1]:
-            st.markdown(f"<div style='display: flex; justify-content: center; align-items: center; height: 30px; font-weight: bold; font-size: 13px; color: #333;'>{chr(65 + row)}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='row-label'>{chr(65 + row)}</div>", unsafe_allow_html=True)
         
         for col in range(12):
             with cols[col + 2]:
                 is_filled = st.session_state.plate_state[row, col]
                 button_text = "●" if is_filled else "○"
+                
+                # Apply custom CSS classes based on state
+                if is_filled:
+                    st.markdown(f"""
+                    <style>
+                    div[data-testid="column"]:nth-child({col + 3}) .stButton > button {{
+                        background: linear-gradient(145deg, #007bff, #0056b3) !important;
+                        color: white !important;
+                        border: 2px solid #0056b3 !important;
+                        box-shadow: 0 0 12px rgba(0, 123, 255, 0.8) !important;
+                        transform: scale(1.05) !important;
+                    }}
+                    </style>
+                    """, unsafe_allow_html=True)
                 
                 if st.button(
                     button_text, 
@@ -396,6 +521,51 @@ Total Volume: {total_volume:,} µl ({total_volume/1000:.2f} ml)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Simple footer
-st.markdown("---")
-st.markdown("💡 **Click wells to select • Use checkboxes for entire rows/columns**")
+# JavaScript to enable drag selection functionality
+st.markdown("""
+<script>
+let isDragging = false;
+let dragStartState = null;
+
+function setupDragSelection() {
+    const buttons = document.querySelectorAll('button');
+    
+    buttons.forEach(button => {
+        if (button.textContent.match(/[●○]/)) {
+            button.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                dragStartState = this.textContent === '●' ? false : true;
+                e.preventDefault();
+            });
+            
+            button.addEventListener('mouseenter', function() {
+                if (isDragging) {
+                    const currentState = this.textContent === '●';
+                    if (currentState !== dragStartState) {
+                        this.click();
+                    }
+                }
+            });
+        }
+    });
+    
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+        dragStartState = null;
+    });
+}
+
+// Setup drag selection after a short delay to ensure buttons are rendered
+setTimeout(setupDragSelection, 500);
+
+// Re-setup after each Streamlit rerun
+const observer = new MutationObserver(function(mutations) {
+    setTimeout(setupDragSelection, 100);
+});
+
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+</script>
+""", unsafe_allow_html=True)
