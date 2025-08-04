@@ -88,7 +88,7 @@ def get_well_id(row, col):
 def update_calculations():
     """Update all calculations based on current plate state"""
     filled_wells = np.sum(st.session_state.plate_state)
-    extra_reactions = st.session_state.get('extra_reactions', 4)
+    extra_reactions = st.session_state.get('extra_reactions', 5)
     total_reactions = int(filled_wells + extra_reactions)
     
     return filled_wells, total_reactions
@@ -126,7 +126,7 @@ with st.sidebar:
     extra_reactions = st.number_input(
         "Extra reactions (safety margin):", 
         min_value=0, 
-        value=5, 
+        value=4, 
         step=1,
         help="Additional reactions to account for pipetting losses and safety margin"
     )
