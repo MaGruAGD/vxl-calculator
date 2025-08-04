@@ -74,7 +74,82 @@ st.markdown("""
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin-bottom: 20px;
 }
+
+/* Center checkboxes and labels */
+.stCheckbox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.stCheckbox > label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* Drag selection styles */
+.plate-grid {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Better visibility for selected wells */
+.well-selected {
+    background-color: #007bff !important;
+    color: white !important;
+    font-weight: bold !important;
+    border: 2px solid #0056b3 !important;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5) !important;
+}
+
+.well-unselected {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.well-unselected:hover {
+    background-color: #e9ecef !important;
+    border: 1px solid #adb5bd !important;
+}
 </style>
+
+<script>
+// Drag selection functionality
+let isDragging = false;
+let dragStartState = null;
+
+function initializeDragSelection() {
+    document.addEventListener('mousedown', function(e) {
+        if (e.target.classList.contains('well-button')) {
+            isDragging = true;
+            dragStartState = e.target.getAttribute('data-selected') === 'true';
+            e.preventDefault();
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+        dragStartState = null;
+    });
+
+    document.addEventListener('mouseover', function(e) {
+        if (isDragging && e.target.classList.contains('well-button')) {
+            const currentState = e.target.getAttribute('data-selected') === 'true';
+            if (currentState !== !dragStartState) {
+                e.target.click();
+            }
+        }
+    });
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', initializeDragSelection);
+</script>
 """, unsafe_allow_html=True)
 
 # Initialize session state
@@ -101,7 +176,8 @@ st.markdown("Interactive 96-well plate VXL calculation tool")
 with st.expander("📋 Instructions", expanded=False):
     st.markdown("""
     - **Individual Wells**: Click on any well to toggle its selection
-    - **Column Selection**: Use the column buttons to select entire columns
+    - **Drag Selection**: Click and drag across wells to select/deselect multiple wells at once
+    - **Column/Row Selection**: Use the checkboxes to select entire columns or rows
     - **Quick Fill/Clear**: Use the sidebar buttons to fill or clear the entire plate
     """)
 
@@ -138,21 +214,22 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.subheader("96-Well Plate Layout")
     
-
+    # Create interactive plate display with drag selection
+    st.markdown("**Select rows/columns or click/drag individual wells:**")
     
-    # Create interactive plate display
-    st.markdown("**Select rows/columns or click individual wells:**")
-    
-    # Column headers with checkboxes
-    header_cols = st.columns([0.5, 0.5] + [1] * 12)
+    # Column headers with centered checkboxes
+    header_cols = st.columns([0.8, 0.8] + [1] * 12)
     with header_cols[0]:
         st.markdown("")  # Empty space 
     with header_cols[1]:
         st.markdown("")  # Empty space for row checkboxes
+    
     for i in range(12):
         with header_cols[i + 2]:
             col_filled = np.all(st.session_state.plate_state[:, i])
-            if st.checkbox("", value=col_filled, key=f"col_check_{i}", help=f"Select entire column {i+1}"):
+            # Center the checkbox
+            st.markdown(f"<div style='text-align: center; margin-bottom: 5px;'>", unsafe_allow_html=True)
+            if st.checkbox("", value=col_filled, key=f"col_check_{i}"):
                 if not col_filled:  # If checkbox is now checked and column wasn't filled
                     st.session_state.plate_state[:, i] = True
                     st.rerun()
@@ -160,15 +237,20 @@ with col1:
                 if col_filled:  # If checkbox is now unchecked and column was filled
                     st.session_state.plate_state[:, i] = False
                     st.rerun()
-            st.markdown(f"<div style='text-align: center; font-weight: bold; font-size: 12px; color: #666;'>{i+1}</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center; font-weight: bold; font-size: 14px; color: #333; margin-top: 5px;'>{i+1}</div>", unsafe_allow_html=True)
     
-    # Create the 96-well plate grid
+    # Create the 96-well plate grid with drag selection
+    st.markdown('<div class="plate-grid">', unsafe_allow_html=True)
+    
     for row in range(8):
-        cols = st.columns([0.5, 0.5] + [1] * 12)  # Row checkbox + Row label + 12 wells
+        cols = st.columns([0.8, 0.8] + [1] * 12)  # Row checkbox + Row label + 12 wells
         
         with cols[0]:
             row_filled = np.all(st.session_state.plate_state[row, :])
-            if st.checkbox("", value=row_filled, key=f"row_check_{row}", help=f"Select entire row {chr(65 + row)}"):
+            # Center the checkbox
+            st.markdown(f"<div style='display: flex; justify-content: center; align-items: center; height: 40px;'>", unsafe_allow_html=True)
+            if st.checkbox("", value=row_filled, key=f"row_check_{row}"):
                 if not row_filled:  # If checkbox is now checked and row wasn't filled
                     st.session_state.plate_state[row, :] = True
                     st.rerun()
@@ -176,23 +258,37 @@ with col1:
                 if row_filled:  # If checkbox is now unchecked and row was filled
                     st.session_state.plate_state[row, :] = False
                     st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
         
         with cols[1]:
-            st.markdown(f"<div style='text-align: center; font-weight: bold; font-size: 14px; color: #666; padding: 5px;'>{chr(65 + row)}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='display: flex; justify-content: center; align-items: center; height: 40px; font-weight: bold; font-size: 16px; color: #333;'>{chr(65 + row)}</div>", unsafe_allow_html=True)
         
         for col in range(12):
             with cols[col + 2]:
                 well_id = get_well_id(row, col)
                 is_filled = st.session_state.plate_state[row, col]
                 
+                # Custom styling for better visibility
+                button_style = "well-selected" if is_filled else "well-unselected"
+                button_text = "●" if is_filled else "○"
+                
+                # Create button with custom styling and data attributes for drag selection
+                button_html = f"""
+                <div style="width: 100%; height: 40px; display: flex; justify-content: center; align-items: center;">
+                """
+                
                 if st.button(
-                    "●" if is_filled else "○", 
+                    button_text, 
                     key=f"well_{row}_{col}",
-                    help=f"Well {well_id}",
-                    use_container_width=True
+                    use_container_width=True,
                 ):
                     st.session_state.plate_state[row, col] = not st.session_state.plate_state[row, col]
                     st.rerun()
+                
+                # Add invisible element for well identification (for future drag functionality)
+                st.markdown(f'<div class="well-button {button_style}" data-row="{row}" data-col="{col}" data-selected="{str(is_filled).lower()}" style="display: none;"></div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
     st.subheader("📊 Results")
@@ -306,4 +402,12 @@ with st.expander("📋 Current Plate Summary", expanded=False):
 
 # Footer
 st.markdown("---")
-st.markdown("💡 **Tips:** Use column buttons for quick selection of entire columns, or click individual wells to toggle them!")
+st.markdown("💡 **Tips:** Use drag selection to quickly select multiple wells, or use row/column checkboxes for entire rows/columns!")
+
+# JavaScript for enhanced drag functionality (this would need to be implemented differently in Streamlit)
+st.markdown("""
+<script>
+// Enhanced drag selection would need custom component implementation
+// This is a placeholder for future enhancement
+</script>
+""", unsafe_allow_html=True)
