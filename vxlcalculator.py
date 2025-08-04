@@ -567,10 +567,11 @@ Total Volume: {total_volume:,} µl ({total_volume/1000:.2f} ml)
             csv_data = summary + df.to_csv(index=False)
             
             st.download_button(
-                label="💾 Download CSV Report",
+                label="💾 Export CSV",
                 data=csv_data,
                 file_name=f"vxl_buffer_calculations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv"
+                mime="text/csv",
+                use_container_width=True  # Helps fix squishing
             )
 
     
