@@ -569,10 +569,10 @@ Total Volume: {total_volume:,} µl ({total_volume/1000:.2f} ml)
             st.download_button(
                 label="💾 Download CSV Report",
                 data=csv_data,
-                file_name=f"VXL_buffer_calc_{int(filled_wells)}wells_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-                mime="text/csv",
-                use_container_width=True
+                file_name=f"vxl_buffer_calculations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv"
             )
+
     
     else:
         st.info("👈 Select wells on the plate to calculate buffer requirements")
